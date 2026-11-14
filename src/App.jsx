@@ -4,6 +4,7 @@ import Jersey from './Jersey.jsx'
 import Fx from './Fx.jsx'
 import HoloCard from './HoloCard.jsx'
 import Gallery from './Gallery.jsx'
+import Ranking from './Ranking.jsx'
 import { addToCollection, clearCollection, loadCollection } from './collection.js'
 import { LEAGUES, mainColor, teamById } from './teams.js'
 import { getStats, recordRitual } from './api.js'
@@ -143,7 +144,9 @@ export default function App() {
   const burnPct = total ? Math.round((b / total) * 100) : 50
   const teamB = stats[`burn:${teamId}`] || 0, teamF = stats[`farewell:${teamId}`] || 0
   const busy = phase === 'burn' || phase === 'farewell'
-  const stageClass = [phase === 'done' ? `done-${result}` : phase, phase === 'edit' && hover && ready ? `pre-${hover}` : ''].join(' ')
+  // KBO 유니폼(또는 KBO 탭)을 고르면 무대가 야구장으로 바뀐다
+  const sport = team ? team.kit.sport || 'soccer' : leagueId === 'kbo' ? 'baseball' : 'soccer'
+  const stageClass = [phase === 'done' ? `done-${result}` : phase, phase === 'edit' && hover && ready ? `pre-${hover}` : '', sport].join(' ')
   const showCard = result === 'farewell' && (step >= 4 || phase === 'done')
   const getRect = () => (result === 'farewell' ? holoRef.current : clothRef.current)?.getBoundingClientRect()
 
@@ -158,6 +161,7 @@ export default function App() {
           <button type="button" className={view === 'gallery' ? 'tab on' : 'tab'} onClick={() => setView('gallery')} disabled={busy}>
             내 전시관{items.length > 0 && <i className="count">{items.length}</i>}
           </button>
+          <button type="button" className={view === 'ranking' ? 'tab on' : 'tab'} onClick={() => setView('ranking')} disabled={busy}>랭킹</button>
         </nav>
         <p className="ticker">
           {total > 0
@@ -171,9 +175,11 @@ export default function App() {
         <Gallery items={items} onStart={() => setView('make')} onClear={() => setItems(clearCollection())} />
       )}
 
+      {view === 'ranking' && <Ranking items={items} />}
+
       <div className="layout" hidden={view !== 'make'}>
         <section className={`stage ${stageClass}`} style={{ '--tc': tc }} onPointerMove={onMove} onPointerLeave={resetTilt}>
-          <div className="pitch" aria-hidden="true" />
+          <div className="pitch" aria-hidden="true"><i className="foul fl" /><i className="foul fr" /><i className="mound" /></div>
           <div className="cone" aria-hidden="true" />
           <div className="beam b1" aria-hidden="true" /><div className="beam b2" aria-hidden="true" />
           <div className="fireglow" aria-hidden="true" />
