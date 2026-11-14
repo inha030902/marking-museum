@@ -5,7 +5,7 @@ import Fx from './Fx.jsx'
 import HoloCard from './HoloCard.jsx'
 import Gallery from './Gallery.jsx'
 import { addToCollection, clearCollection, loadCollection } from './collection.js'
-import { TEAMS, mainColor, teamById } from './teams.js'
+import { LEAGUES, mainColor, teamById } from './teams.js'
 import { getStats, recordRitual } from './api.js'
 import * as sfx from './sound.js'
 
@@ -24,6 +24,8 @@ export default function App() {
   const [stats, setStats] = useState({})
   const [note, setNote] = useState('')
   const [muted, setMuted] = useState(false)
+  const [leagueId, setLeagueId] = useState('epl')
+  const league = LEAGUES.find((l) => l.id === leagueId) || LEAGUES[0]
   const [view, setView] = useState('make') // make | gallery
   const [items, setItems] = useState(loadCollection)
 
@@ -112,7 +114,7 @@ export default function App() {
   const fillExample = () => {
     const [n, no] = EXAMPLES[Math.floor(Math.random() * EXAMPLES.length)]
     setName(n); setNumber(no); sfx.tick()
-    if (!teamId) { setTeamId(TEAMS[Math.floor(Math.random() * TEAMS.length)].id); sfx.swish() }
+    if (!teamId) { setTeamId(league.teams[Math.floor(Math.random() * league.teams.length)].id); sfx.swish() }
   }
 
   const toggleMute = () => { const m = !muted; setMuted(m); sfx.setMuted(m) }
@@ -177,11 +179,34 @@ export default function App() {
           <div className="fireglow" aria-hidden="true" />
 
           <div className="rig">
+            {/* 봉과 옷걸이는 유니폼과 같은 좌표계(가로 300 단위)로 그려서 어깨선에 정확히 맞춘다 */}
+            <svg className="rail" viewBox="-300 -70 900 140" aria-hidden="true">
+              <defs>
+                <linearGradient id="railMetal" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stopColor="#f2f5f9" /><stop offset="0.45" stopColor="#9aa2af" /><stop offset="1" stopColor="#3d434d" />
+                </linearGradient>
+                <linearGradient id="railFade" x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0" stopColor="#fff" stopOpacity="0" /><stop offset="0.22" stopColor="#fff" /><stop offset="0.78" stopColor="#fff" /><stop offset="1" stopColor="#fff" stopOpacity="0" />
+                </linearGradient>
+                <mask id="railMask"><rect x="-300" y="-70" width="900" height="140" fill="url(#railFade)" /></mask>
+              </defs>
+              <g mask="url(#railMask)">
+                <rect x="-300" y="-49" width="900" height="12" fill="#000" opacity="0.35" />
+                <rect x="-300" y="-57" width="900" height="10" rx="5" fill="url(#railMetal)" />
+              </g>
+            </svg>
             <div className="tilt" ref={tiltRef}>
               <div className="sway">
-                <svg className="hanger" viewBox="0 0 220 70" aria-hidden="true">
-                  <path d="M110 30 C110 18 124 18 124 10 C124 3 116 0 110 3" fill="none" stroke="#b9b2a6" strokeWidth="3.5" strokeLinecap="round" />
-                  <path d="M110 30 L18 62 Q110 70 202 62 Z" fill="none" stroke="#b9b2a6" strokeWidth="3.5" strokeLinejoin="round" />
+                <svg className="hanger" viewBox="0 -70 300 140" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="hangerMetal" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0" stopColor="#f4f6f9" /><stop offset="1" stopColor="#8f97a4" />
+                    </linearGradient>
+                  </defs>
+                  {/* 고리: 봉 위로 넘어가 걸린다 */}
+                  <path d="M150 6 L150 -22 C150 -36 171 -36 171 -51 C171 -67 147 -69 140 -56" fill="none" stroke="url(#hangerMetal)" strokeWidth="4.5" strokeLinecap="round" />
+                  {/* 어깨: 양 끝은 유니폼 어깨 속으로 들어가 가려진다 */}
+                  <path d="M150 6 L40 55 Q150 68 260 55 Z" fill="none" stroke="url(#hangerMetal)" strokeWidth="4.5" strokeLinejoin="round" />
                 </svg>
                 <div className="warp">
                   <div className="cloth" ref={clothRef}>
@@ -240,15 +265,22 @@ export default function App() {
         <aside className="panel">
           {phase === 'edit' && (
             <div className="editor">
-              <p className="kicker">KIT ROOM · PREMIER LEAGUE</p>
+              <p className="kicker">KIT ROOM · {league.full}</p>
               <h1>선수는 떠났고,<br />유니폼만 남았다.</h1>
               <p className="lead">이름까지 새겼는데 그 선수가 팀을 떠났나요? 옷장 속 그 유니폼, 여기서 정리하세요.</p>
 
-              <div className="step"><span>01</span> 어느 팀 유니폼인가요?</div>
-              <div className="teams">
-                {TEAMS.map((t) => (
+              <div className="step"><span>01</span> 어느 팀 유니폼인가요?
+                <div className="leagues">
+                  {LEAGUES.map((l) => (
+                    <button key={l.id} type="button" className={leagueId === l.id ? 'on' : ''} onClick={() => { setLeagueId(l.id); sfx.tick() }}>{l.label}</button>
+                  ))}
+                </div>
+              </div>
+              <div className={`teams ${leagueId}`} key={leagueId}>
+                {league.teams.map((t) => (
                   <button key={t.id} type="button" className={teamId === t.id ? 'team on' : 'team'} onClick={() => pickTeam(t.id)} title={t.name}>
-                    <Jersey kit={t.kit} size={38} lite />
+                    {/* 야구 홈 유니폼은 대부분 흰색이라, 팀 색이 보이도록 작은 번호를 넣는다 */}
+                    <Jersey kit={t.kit} size={38} lite number={t.kit.sport === 'baseball' ? '1' : ''} />
                     <em>{t.name}</em>
                   </button>
                 ))}
