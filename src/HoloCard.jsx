@@ -2,15 +2,9 @@ import { useEffect, useRef } from 'react'
 import Jersey from './Jersey.jsx'
 import { mainColor } from './teams.js'
 
-// 유니폼 카드. variant: 'farewell' (액자 봉인) | 'burn' (화형식) | 'incinerate' (소각로) | 'recycle' (분리수거/마킹갈이)
-const VARIANT_META = {
-  farewell: { badge: 'FRAMED', footer: 'HALL OF FAME' },
-  burn: { badge: 'TORCHED', footer: 'BURNED TO ASH' },
-  incinerate: { badge: '1,800°C MELTED', footer: 'INDUSTRIAL INCINERATOR' },
-  recycle: { badge: 'UPCYCLED', footer: 'MARKING REMOVED' },
-}
-
-export default function HoloCard({ team, name, number, msg, date, outerRef, variant = 'farewell', idle = true, tapeName = '' }) {
+// 유니폼 카드. variant 'farewell'은 홀로그램 카드, 'burn'은 그을린 카드.
+// 포인터를 따라 기울고 빛이 흐른다. idle이면 포인터가 없을 때 스스로 천천히 움직인다.
+export default function HoloCard({ team, name, number, msg, date, outerRef, variant = 'farewell', idle = true }) {
   const hover = useRef(false)
   const local = useRef(null)
   const setRef = (el) => { local.current = el; if (outerRef) outerRef.current = el }
@@ -47,24 +41,19 @@ export default function HoloCard({ team, name, number, msg, date, outerRef, vari
   }
   const onLeave = () => { hover.current = false; if (!idle) apply(50, 50, 0.3) }
 
-  const displayName = variant === 'recycle' && tapeName ? tapeName : name
-  const ko = /[가-힣]/.test(displayName)
-  const meta = VARIANT_META[variant] || VARIANT_META.farewell
+  const ko = /[가-힣]/.test(name)
+  const burned = variant === 'burn'
   return (
     <div className={`holo ${variant}`} ref={setRef} onPointerMove={onMove} onPointerLeave={onLeave} style={{ '--tc': mainColor(team.kit) }}>
       <div className="holo-inner">
         <div className="holo-bg" />
-        <div className="holo-top"><span className="badge">{meta.badge}</span><span>{team.en}</span></div>
-        <div className="holo-jersey">
-          <Jersey kit={team.kit} name={name} number={number} size={196}
-            peelProgress={variant === 'recycle' ? 1 : 0}
-            tapeName={variant === 'recycle' ? tapeName : ''} />
-        </div>
+        <div className="holo-top"><span className="badge">{burned ? 'BURNED' : 'RETIRED'}</span><span>{team.en}</span></div>
+        <div className="holo-jersey"><Jersey kit={team.kit} name={name} number={number} size={196} /></div>
         <div className="holo-bottom">
-          <b className={ko ? 'ko' : ''}>{displayName}</b>
+          <b className={ko ? 'ko' : ''}>{name}</b>
           <span>No.{number} · {team.name}</span>
           {msg && <em>“{msg}”</em>}
-          <small>{date} · {meta.footer}</small>
+          <small>{date} · {burned ? 'BURNED TO ASH' : 'HALL OF FAME'}</small>
         </div>
         <div className="holo-shine" />
         <div className="holo-glare" />
