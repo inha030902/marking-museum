@@ -32,9 +32,12 @@ export default function Exhibit({ id }) {
   const states = STATES.map((st) => ({ ...st, n: m.stateCounts[st.id] || 0 })).sort((a, b) => b.n - a.n)
 
   const flower = async () => {
-    const x = await addFlower(m.id)
-    setM({ ...x })
     setSmoke((v) => v + 1)
+    setM((cur) => ({ ...cur, flowers: cur.flowers + 1 }))
+    try {
+      const x = await addFlower(m.id)
+      if (x) setM((cur) => ({ ...cur, flowers: x.flowers }))
+    } catch { /* 국화는 실패해도 화면은 유지 */ }
   }
 
   return (
@@ -92,9 +95,9 @@ export default function Exhibit({ id }) {
 
       <section className="guestbook">
         <h3>방명록</h3>
-        {m.messages.length === 0 && <p className="muted">아직 남겨진 조문이 없어요. 첫 조문객이 되어 주세요.</p>}
+        {!m.messages?.length && <p className="muted">아직 남겨진 조문이 없어요. 첫 조문객이 되어 주세요.</p>}
         <ul>
-          {m.messages.map((c) => <li key={c.id}>“{c.story}”</li>)}
+          {(m.messages || []).map((c) => <li key={c.id}>“{c.story}”</li>)}
         </ul>
       </section>
     </div>
@@ -113,8 +116,14 @@ function CondolenceForm({ m, onDone }) {
     if (f.price < 0 || f.price > 2000000) return setErr('구매 가격을 다시 확인해 주세요.')
     if (f.wears < 1 || f.wears > 999) return setErr('입은 횟수는 1회 이상이어야 해요.')
     setBusy(true)
-    const res = await addCondolence(m.id, { ...f, story: f.story.trim().slice(0, 60) })
-    onDone({ ...res, form: f })
+    setErr('')
+    try {
+      const res = await addCondolence(m.id, { ...f, story: f.story.trim().slice(0, 60) })
+      onDone({ ...res, form: f })
+    } catch (e2) {
+      setErr(e2.message || '잠시 후 다시 시도해 주세요.')
+      setBusy(false)
+    }
   }
 
   return (

@@ -32,11 +32,15 @@ export default function Enshrine({ presetSport }) {
     const num = parseInt(f.number, 10)
     if (Number.isNaN(num) || num < 0 || num > 99) return setErr('등번호는 0~99 사이 숫자로 적어주세요.')
     if (Number(f.from) > Number(f.to)) return setErr('함께한 기간을 다시 확인해 주세요.')
-    const { memorial } = await createMemorial({
-      sport: f.sport, name, team, number: num, reason: f.reason,
-      from: Number(f.from), to: Number(f.to), main: c.main, accent: c.accent,
-    })
-    go('m/' + memorial.id)
+    try {
+      const { memorial } = await createMemorial({
+        sport: f.sport, name, team, number: num, reason: f.reason,
+        from: Number(f.from), to: Number(f.to), main: c.main, accent: c.accent,
+      })
+      go('m/' + memorial.id)
+    } catch (e2) {
+      setErr(e2.message || '잠시 후 다시 시도해 주세요.')
+    }
   }
 
   const fillExample = () => setF({ ...f, name: '도망자', team: '한강 유나이티드', number: '11', reason: 'rival', color: 1 })
