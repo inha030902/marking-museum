@@ -649,3 +649,6 @@ li.first .r-name b { font-size: 30px; }
   .r-count small { display: block; margin: 2px 0 0; }
   .r-note { padding: 0 16px; }
 }
+
+/* 마운드는 작게: 잔디 한가운데에 놓인 작은 흙 원 */
+.stage.baseball .pitch .mound { width: 14%; bottom: 5%; }
