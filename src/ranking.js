@@ -29,9 +29,9 @@ const SEED = {
     ['samsung', '돈따라간다', '13', 668],
     ['mancity', 'FLOP', '25', 602],
     ['lg', '야반도주', '47', 547],
-    ['westham', 'DIVER', '11', 489],
+    ['everton', 'DIVER', '11', 489],
     ['kt', '런', '3', 431],
-    ['wolves', 'GHOST', '37', 377],
+    ['fulham', 'GHOST', '37', 377],
   ],
 }
 
