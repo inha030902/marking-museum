@@ -10,7 +10,7 @@ const redis = new Redis({
 })
 
 const KEY = 'gj:stats'
-const TYPES = ['farewell', 'burn']
+const TYPES = ['farewell', 'burn', 'incinerate', 'recycle']
 
 async function readStats() {
   const h = (await redis.hgetall(KEY)) || {}

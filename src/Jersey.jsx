@@ -14,7 +14,7 @@ const P = {
   hem: 'M66 304 Q150 314 234 304 L234 312 Q150 322 66 312 Z',
 }
 
-export default function Jersey({ kit, name = '', number = '', size = 300, lite = false, className }) {
+export default function Jersey({ kit, name = '', number = '', size = 300, lite = false, className, peelProgress = 0, tapeName = '' }) {
   const uid = 'j' + useId().replace(/[^a-zA-Z0-9]/g, '')
   const k = kit || BLANK_KIT
   const nm = String(name || '').toUpperCase().slice(0, 12)
@@ -26,6 +26,10 @@ export default function Jersey({ kit, name = '', number = '', size = 300, lite =
   const baseball = k.sport === 'baseball'
   const blockFont = "'Graduate', 'Oswald', 'Noto Sans KR', serif"
   const arcSize = hangul ? (len <= 3 ? 28 : len <= 5 ? 23 : 18) : (len <= 5 ? 27 : len <= 8 ? 22 : len <= 10 ? 18 : 15)
+  const peel = Math.max(0, Math.min(1, peelProgress || 0))
+  const markOpacity = Math.max(0.06, 1 - peel * 1.1)
+  const markTilt = peel > 0 ? `rotate(${(peel * 7).toFixed(1)} 150 150) translate(0 ${(peel * 6).toFixed(1)})` : undefined
+  const tape = String(tapeName || '').trim().toUpperCase().slice(0, 12)
 
   const stripes = []
   if (k.stripes) for (let x = 150 - 11 - 44 * 3; x < 300; x += 44) stripes.push(<rect key={x} x={x} y="0" width="22" height="330" fill={k.stripes} />)
@@ -103,27 +107,51 @@ export default function Jersey({ kit, name = '', number = '', size = 300, lite =
       </g>
       <path d={P.full} fill="none" stroke="rgba(0,0,0,.4)" strokeWidth="1.2" />
 
-      {nm && !baseball && (
+      {/* 접착제 자국 (분리수거 마킹 박리 시 드러남) */}
+      {peel > 0.05 && nm && (
         <text x="150" y="99" textAnchor="middle" fontFamily={hangul ? "'Noto Sans KR', sans-serif" : "'Oswald', 'Noto Sans KR', sans-serif"}
-          fontWeight={hangul ? 900 : 700} fontSize={nameSize} letterSpacing={hangul ? 2 : 3.5} fill={k.name}>{nm}</text>
+          fontWeight={hangul ? 900 : 700} fontSize={nameSize} letterSpacing={hangul ? 2 : 3.5}
+          fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="1.2" strokeDasharray="3 2" opacity={Math.min(0.65, peel)}>{nm}</text>
       )}
-      {/* 야구: 아치형 이름 + 블록체 번호 */}
-      {nm && baseball && (
-        <>
-          <path id={uid + 'arc'} d="M70 112 Q150 72 230 112" fill="none" />
-          <text fontFamily={hangul ? "'Noto Sans KR', sans-serif" : blockFont} fontWeight={hangul ? 900 : 400} fontSize={arcSize} letterSpacing={hangul ? 3 : 2.5} fill={k.name}>
-            <textPath href={`#${uid}arc`} startOffset="50%" textAnchor="middle">{nm}</textPath>
-          </text>
-        </>
+      {peel > 0.05 && no && (
+        <text x="150" y="236" textAnchor="middle" fontFamily={baseball ? blockFont : "'Oswald', sans-serif"} fontWeight="700"
+          fontSize={baseball ? (no.length > 1 ? 112 : 124) : (no.length > 1 ? 130 : 140)}
+          fill="none" stroke="rgba(255,255,255,0.24)" strokeWidth="1.5" strokeDasharray="4 3" opacity={Math.min(0.6, peel)}>{no}</text>
       )}
-      {no && baseball && (
-        <text x="150" y="238" textAnchor="middle" fontFamily={blockFont} fontSize={no.length > 1 ? 112 : 124} fill={k.num}
-          stroke={k.numStroke || 'none'} strokeWidth={k.numStroke ? 6 : 0} paintOrder="stroke" strokeLinejoin="round">{no}</text>
-      )}
-      {no && !baseball && (
-        <text x="150" y="236" textAnchor="middle" fontFamily="'Oswald', sans-serif" fontWeight="700"
-          fontSize={no.length > 1 ? 130 : 140} fill={k.num} stroke={k.numStroke || 'none'} strokeWidth={k.numStroke ? 7 : 0}
-          paintOrder="stroke" strokeLinejoin="round">{no}</text>
+
+      <g opacity={markOpacity} transform={markTilt}>
+        {nm && !baseball && (
+          <text x="150" y="99" textAnchor="middle" fontFamily={hangul ? "'Noto Sans KR', sans-serif" : "'Oswald', 'Noto Sans KR', sans-serif"}
+            fontWeight={hangul ? 900 : 700} fontSize={nameSize} letterSpacing={hangul ? 2 : 3.5} fill={k.name}>{nm}</text>
+        )}
+        {/* 야구: 아치형 이름 + 블록체 번호 */}
+        {nm && baseball && (
+          <>
+            <path id={uid + 'arc'} d="M70 112 Q150 72 230 112" fill="none" />
+            <text fontFamily={hangul ? "'Noto Sans KR', sans-serif" : blockFont} fontWeight={hangul ? 900 : 400} fontSize={arcSize} letterSpacing={hangul ? 3 : 2.5} fill={k.name}>
+              <textPath href={`#${uid}arc`} startOffset="50%" textAnchor="middle">{nm}</textPath>
+            </text>
+          </>
+        )}
+        {no && baseball && (
+          <text x="150" y="238" textAnchor="middle" fontFamily={blockFont} fontSize={no.length > 1 ? 112 : 124} fill={k.num}
+            stroke={k.numStroke || 'none'} strokeWidth={k.numStroke ? 6 : 0} paintOrder="stroke" strokeLinejoin="round">{no}</text>
+        )}
+        {no && !baseball && (
+          <text x="150" y="236" textAnchor="middle" fontFamily="'Oswald', sans-serif" fontWeight="700"
+            fontSize={no.length > 1 ? 130 : 140} fill={k.num} stroke={k.numStroke || 'none'} strokeWidth={k.numStroke ? 7 : 0}
+            paintOrder="stroke" strokeLinejoin="round">{no}</text>
+        )}
+      </g>
+
+      {/* 청테이프 마킹갈이 */}
+      {tape && (
+        <g transform="rotate(-2.2 150 92)">
+          <rect x="64" y="68" width="172" height="44" rx="2" fill="#2563eb" stroke="#1d4ed8" strokeWidth="1.5" />
+          <rect x="64" y="68" width="172" height="10" fill="rgba(255,255,255,0.18)" />
+          <text x="150" y="99" textAnchor="middle" fontFamily="'Noto Sans KR', sans-serif" fontWeight="900"
+            fontSize={tape.length <= 5 ? 24 : 18} letterSpacing="1.5" fill="#ffffff" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>{tape}</text>
+        </g>
       )}
     </svg>
   )
