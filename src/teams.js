@@ -52,20 +52,6 @@ export const TEAMS = [...EPL, ...KBO]
 export const teamById = (id) => TEAMS.find((t) => t.id === id) || null
 export const TEAM_IDS = TEAMS.map((t) => t.id)
 
-export const REASONS = [
-  { id: 'betrayal', label: '🤬 라이벌 환승이적', desc: '금기된 팀으로 떠난 배신' },
-  { id: 'money', label: '💸 FA 머니러시/먹튀', desc: '돈 따라 떠났거나 기대 이하' },
-  { id: 'legend', label: '😭 아름다운 이별/레전드', desc: '박수 치며 보내주는 영웅' },
-  { id: 'release', label: '♻️ 방출/임대복귀', desc: '아쉽지만 옷장 정리 대상' },
-]
-
-export const SCENARIOS = [
-  { id: 'burn', label: '🔥 배신자 화형', leagueId: 'epl', teamId: 'arsenal', name: 'JUDAS', number: '10', price: 159000, reason: 'betrayal', msg: '라이벌 팀 가서도 잘 먹고 잘 살아라' },
-  { id: 'incinerate', label: '🏭 먹튀 소각로', leagueId: 'kbo', teamId: 'lotte', name: 'MONEY', number: '25', price: 135000, reason: 'money', msg: '100억 받고 떠나니 속이 시원하냐' },
-  { id: 'farewell', label: '🖼️ 레전드 액자', leagueId: 'epl', teamId: 'tottenham', name: 'SON', number: '7', price: 169000, reason: 'legend', msg: '10년 동안 우리 팀 심장이었다. 고맙다!' },
-  { id: 'recycle', label: '♻️ 마킹갈이 수거', leagueId: 'kbo', teamId: 'lg', name: 'BUST', number: '99', price: 129000, reason: 'release', msg: '이름만 떼면 내년부터 새 유니폼이다' },
-]
-
 // 카드·연출에 쓰는 팀 대표색 (흰 바탕 유니폼은 줄무늬나 번호 색을 쓴다)
 export function mainColor(kit) {
   const white = kit.body.toLowerCase() === '#ffffff'

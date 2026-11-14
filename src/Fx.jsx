@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
 
-// 캔버스 파티클 효과. mode: 'burn'(불꽃·불씨·연기·재) | 'incinerate'(용광로 불티·열기) | 'farewell'(금빛 반짝임·꽃가루) | 'recycle'(마킹 조각·친환경 스파클)
-// getRect(): 유니폼의 화면 위치, progressRef.current: 0~1 진행도, pointerRef?.current: { x, y, active }
+// 캔버스 파티클 효과. mode: 'burn'(불꽃·불씨·연기·재) | 'farewell'(금빛 반짝임·꽃가루)
+// getRect(): 유니폼의 화면 위치, progressRef.current: 0~1 진행도
 const rand = (a, b) => a + Math.random() * (b - a)
 
-export default function Fx({ mode, getRect, progressRef, pointerRef, colors = [] }) {
+export default function Fx({ mode, getRect, progressRef, colors = [] }) {
   const ref = useRef(null)
 
   useEffect(() => {
@@ -25,25 +25,19 @@ export default function Fx({ mode, getRect, progressRef, pointerRef, colors = []
     let parts = []
     let raf = 0
     let last = performance.now()
+    const t0 = last
     const confetti = ['#f5d98a', '#ffffff', '#c9a96e', ...colors]
-    const vinylColors = ['#ffffff', '#e2e8f0', ...colors.filter(Boolean)]
 
     let puffed = false
-    const spawnBurn = (r, p, dt, ptr) => {
+    const spawnBurn = (r, p, dt) => {
       if (p >= 1 && !puffed) {
         puffed = true
-        for (let i = 0; i < 65; i++) parts.push({ t: 'e', x: r.x + rand(0.1, 0.9) * r.w, y: r.y + rand(0, 0.25) * r.h, vx: rand(-3.8, 3.8), vy: rand(-8.5, -2), life: 0, max: rand(80, 170), s: rand(1.2, 3.4) })
-        for (let i = 0; i < 18; i++) parts.push({ t: 's', x: r.x + rand(0.1, 0.9) * r.w, y: r.y + rand(0, 0.25) * r.h, vx: rand(-0.8, 0.8), vy: rand(-2.2, -0.8), life: 0, max: rand(110, 190), s: rand(40, 80) })
-      }
-      if (ptr?.active && p < 1) {
-        const px = ptr.x, py = ptr.y
-        for (let i = 0; i < 5; i++) {
-          parts.push({ t: 'f', x: px + rand(-18, 18), y: py + rand(-12, 12), vx: rand(-1.2, 1.2), vy: rand(-5.5, -2), life: 0, max: rand(24, 50), s: rand(10, 26) })
-        }
-        if (Math.random() < 0.7) parts.push({ t: 'e', x: px + rand(-14, 14), y: py, vx: rand(-2.2, 2.2), vy: rand(-5, -1.5), life: 0, max: rand(50, 110), s: rand(1.4, 3.2) })
+        for (let i = 0; i < 60; i++) parts.push({ t: 'e', x: r.x + rand(0.1, 0.9) * r.w, y: r.y + rand(0, 0.2) * r.h, vx: rand(-3.5, 3.5), vy: rand(-8, -2), life: 0, max: rand(80, 170), s: rand(1.2, 3.2) })
+        for (let i = 0; i < 16; i++) parts.push({ t: 's', x: r.x + rand(0.1, 0.9) * r.w, y: r.y + rand(0, 0.25) * r.h, vx: rand(-0.8, 0.8), vy: rand(-2.2, -0.8), life: 0, max: rand(110, 190), s: rand(40, 80) })
       }
       if (p <= 0.001 || p >= 1) return
       const y = r.y + r.h * (1 - p)
+      // 소매 높이(위쪽 35%)에서는 전체 폭, 그 아래는 몸통 폭
       const inSleeve = p > 0.62
       const x0 = r.x + r.w * (inSleeve ? 0.04 : 0.22), x1 = r.x + r.w * (inSleeve ? 0.96 : 0.78)
       const n = Math.round(11 * dt)
@@ -55,39 +49,9 @@ export default function Fx({ mode, getRect, progressRef, pointerRef, colors = []
       if (Math.random() < 0.6 * dt) parts.push({ t: 'a', x: rand(x0, x1), y: y + 4, vx: rand(-0.6, 0.6), vy: rand(0.4, 1.6), life: 0, max: rand(120, 200), s: rand(1.5, 4), rot: rand(0, 6) })
     }
 
-    const spawnIncinerate = (r, p, dt, ptr) => {
-      const baseRate = 0.35 + p * 1.4
-      if (Math.random() < baseRate * dt) {
-        parts.push({ t: 'f', x: r.x + rand(0.1, 0.9) * r.w, y: r.y + r.h * rand(0.75, 1.05), vx: rand(-1.5, 1.5), vy: rand(-7.5, -3.2), life: 0, max: rand(34, 68), s: rand(14, 34) })
-      }
-      if (Math.random() < (0.6 + p * 1.5) * dt) {
-        parts.push({ t: 'e', x: r.x + rand(0.05, 0.95) * r.w, y: r.y + r.h * rand(0.3, 1.0), vx: rand(-3.5, 3.5), vy: rand(-9, -3), life: 0, max: rand(60, 130), s: rand(1.5, 4) })
-      }
-      if (ptr?.burst) {
-        ptr.burst = false
-        const bx = ptr.x || (r.x + r.w / 2), by = ptr.y || (r.y + r.h * 0.65)
-        for (let i = 0; i < 28; i++) {
-          const ang = rand(0, 6.283), sp = rand(3, 12)
-          parts.push({ t: 'e', x: bx, y: by, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 2.5, life: 0, max: rand(40, 95), s: rand(2, 4.5) })
-        }
-        for (let i = 0; i < 10; i++) {
-          parts.push({ t: 'f', x: bx + rand(-35, 35), y: by + rand(-20, 20), vx: rand(-2, 2), vy: rand(-8, -3), life: 0, max: rand(28, 52), s: rand(16, 36) })
-        }
-      }
-      if (p >= 1 && !puffed) {
-        puffed = true
-        for (let i = 0; i < 75; i++) parts.push({ t: 'e', x: r.x + rand(0, 1) * r.w, y: r.y + rand(0.2, 0.9) * r.h, vx: rand(-5, 5), vy: rand(-11, -3), life: 0, max: rand(90, 180), s: rand(1.6, 4.2) })
-      }
-    }
-
     let burstAt = 0
     const pick = () => confetti[Math.floor(Math.random() * confetti.length)]
-    const spawnFarewell = (r, now, dt, p, ptr) => {
-      if (ptr?.active && p < 1) {
-        for (let i = 0; i < 3; i++) {
-          parts.push({ t: 'g', x: ptr.x + rand(-22, 22), y: ptr.y + rand(-22, 22), vx: rand(-0.9, 0.9), vy: rand(-2.2, 0.2), life: 0, max: rand(36, 75), s: rand(1.5, 3.4), ph: rand(0, 6) })
-        }
-      }
+    const spawnFarewell = (r, now, dt, p) => {
       if (Math.random() < 0.55 * dt) parts.push({ t: 'g', x: rand(0, W), y: rand(H * 0.25, H), vx: rand(-0.3, 0.3), vy: rand(-1.5, -0.3), life: 0, max: rand(60, 130), s: rand(1, 2.6), ph: rand(0, 6) })
       if (p >= 1 && !burstAt) {
         burstAt = now
@@ -103,23 +67,6 @@ export default function Fx({ mode, getRect, progressRef, pointerRef, colors = []
       }
     }
 
-    const spawnRecycle = (r, p, dt, ptr) => {
-      if (ptr?.active && p < 1) {
-        for (let i = 0; i < 3; i++) {
-          const col = vinylColors[Math.floor(Math.random() * vinylColors.length)]
-          parts.push({ t: 'c', x: ptr.x + rand(-18, 18), y: ptr.y + rand(-14, 14), vx: rand(-3.4, 3.4), vy: rand(-4.5, -0.5), g: 0.18, drag: 0.97, life: 0, max: rand(55, 110), w: rand(5, 11), h: rand(4, 8), rot: rand(0, 6), vr: rand(-0.35, 0.35), col, ph: rand(0, 6) })
-        }
-      }
-      if (p >= 1 && !puffed) {
-        puffed = true
-        const cx = r.x + r.w / 2, cy = r.y + r.h / 2
-        for (let i = 0; i < 90; i++) {
-          const ang = rand(0, 6.283), sp = rand(4, 14)
-          parts.push({ t: 'c', x: cx, y: cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 3, g: 0.2, drag: 0.96, life: 0, max: rand(110, 200), w: rand(6, 12), h: rand(4, 8), rot: rand(0, 6), vr: rand(-0.25, 0.25), col: i % 2 === 0 ? '#4ade80' : '#bbf7d0', ph: rand(0, 6) })
-        }
-      }
-    }
-
     const loop = (now) => {
       const dt = Math.min(2.5, (now - last) / 16.67)
       last = now
@@ -127,12 +74,9 @@ export default function Fx({ mode, getRect, progressRef, pointerRef, colors = []
       const jr = getRect()
       const r = jr ? { x: jr.left - cr.left, y: jr.top - cr.top, w: jr.width, h: jr.height } : { x: W / 2 - 100, y: H / 2 - 100, w: 200, h: 220 }
       const p = progressRef.current || 0
-      const ptr = pointerRef?.current
       ctx.clearRect(0, 0, W, H)
-      if (mode === 'burn') spawnBurn(r, p, dt, ptr)
-      else if (mode === 'incinerate') spawnIncinerate(r, p, dt, ptr)
-      else if (mode === 'recycle') spawnRecycle(r, p, dt, ptr)
-      else spawnFarewell(r, now, dt, p, ptr)
+      if (mode === 'burn') spawnBurn(r, p, dt)
+      else spawnFarewell(r, now, dt, p)
 
       const next = []
       for (const q of parts) {
